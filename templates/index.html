@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Resume Analyzer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background: rgba(255,255,255,0.15);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+    width: 350px;
+}
+
+input {
+    margin: 15px 0;
+    padding: 10px;
+    width: 100%;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    padding: 12px;
+    width: 100%;
+    border: none;
+    background: #ff7eb3;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #ff4f9a;
+}
+
+.loader {
+    display: none;
+    margin-top: 10px;
+}
+
+.result {
+    display: none;
+    margin-top: 20px;
+    background: rgba(255,255,255,0.2);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.badge {
+    background: white;
+    color: black;
+    padding: 5px 10px;
+    margin: 5px;
+    border-radius: 15px;
+    display: inline-block;
+}
+
+.selected {
+    color: lightgreen;
+    font-weight: bold;
+}
+
+.rejected {
+    color: red;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Resume Analyzer</h2>
+
+    <input type="file" id="resume">
+    <button onclick="upload()">Analyze Resume</button>
+
+    <div class="loader" id="loader">Analyzing...</div>
+
+    <div class="result" id="result">
+        <p><b>Skills:</b></p>
+        <div id="skills"></div>
+
+        <p><b>Score:</b> <span id="score"></span></p>
+        <p><b>Status:</b> <span id="status"></span></p>
+    </div>
+</div>
+
+<script>
+async function upload() {
+    let fileInput = document.getElementById("resume");
+    let loader = document.getElementById("loader");
+    let result = document.getElementById("result");
+
+    if (fileInput.files.length === 0) {
+        alert("Upload a file first!");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("resume", fileInput.files[0]);
+
+    loader.style.display = "block";
+    result.style.display = "none";
+
+    try {
+        let response = await fetch("http://127.0.0.1:5000/analyze", {
+            method: "POST",
+            body: formData
+        });
+
+        let data = await response.json();
+
+        loader.style.display = "none";
+        result.style.display = "block";
+
+        let skillsDiv = document.getElementById("skills");
+        skillsDiv.innerHTML = "";
+
+        data.skills.forEach(skill => {
+            let span = document.createElement("span");
+            span.className = "badge";
+            span.innerText = skill;
+            skillsDiv.appendChild(span);
+        });
+
+        document.getElementById("score").innerText = data.score + "%";
+
+        let status = document.getElementById("status");
+        status.innerText = data.status;
+
+        if (data.status === "Selected") {
+            status.className = "selected";
+        } else {
+            status.className = "rejected";
+        }
+
+    } catch (error) {
+        loader.style.display = "none";
+        alert("Error connecting to server!");
+    }
+}
+</script>
+
+</body>
+</html>
