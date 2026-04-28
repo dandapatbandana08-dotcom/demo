@@ -2,159 +2,778 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Resume Analyzer</title>
+<title>ResumeIQ — Smart Resume Analyzer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-body {
-    margin: 0;
-    font-family: Arial;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+  :root {
+    --bg: #080b14;
+    --surface: #0f1422;
+    --surface2: #161d30;
+    --border: #1e2a45;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
 
-.container {
-    background: rgba(255,255,255,0.15);
-    padding: 30px;
-    border-radius: 15px;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glowing orbs */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+    top: -200px; right: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb2 {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 70%);
+    bottom: -150px; left: -150px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* Header */
+  .header {
     text-align: center;
-    color: white;
-    width: 350px;
-}
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
 
-input {
-    margin: 15px 0;
-    padding: 10px;
-    width: 100%;
-    border-radius: 8px;
-    border: none;
-}
-
-button {
-    padding: 12px;
-    width: 100%;
-    border: none;
-    background: #ff7eb3;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #ff4f9a;
-}
-
-.loader {
-    display: none;
-    margin-top: 10px;
-}
-
-.result {
-    display: none;
-    margin-top: 20px;
-    background: rgba(255,255,255,0.2);
-    padding: 15px;
-    border-radius: 10px;
-}
-
-.badge {
-    background: white;
-    color: black;
-    padding: 5px 10px;
-    margin: 5px;
-    border-radius: 15px;
+  .logo-tag {
     display: inline-block;
-}
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: 1px solid var(--accent);
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin-bottom: 18px;
+    opacity: 0.8;
+  }
 
-.selected {
-    color: lightgreen;
-    font-weight: bold;
-}
+  h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent2) 50%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
 
-.rejected {
-    color: red;
-    font-weight: bold;
-}
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+  }
+
+  /* Upload card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    background: var(--surface2);
+  }
+
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.05);
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+
+  .drop-zone p {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .drop-zone p strong {
+    color: var(--accent);
+  }
+
+  .file-chosen {
+    display: none;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+  }
+
+  .btn:hover::after { transform: translateX(100%); }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,142,247,0.3); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Loader */
+  .loader {
+    display: none;
+    text-align: center;
+    padding: 32px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .loader-ring {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  .loader p {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    animation: pulse 1.5s ease infinite;
+  }
+
+  /* Results section */
+  .results {
+    display: none;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  /* Score card */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+  }
+
+  .score-info h3 {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .score-value {
+    font-family: var(--mono);
+    font-size: 3.2rem;
+    font-weight: 700;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .status-badge.selected {
+    background: rgba(52,211,153,0.12);
+    border: 1px solid rgba(52,211,153,0.3);
+    color: var(--green);
+  }
+
+  .status-badge.rejected {
+    background: rgba(248,113,113,0.12);
+    border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red);
+  }
+
+  .status-badge .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulseDot 2s ease infinite;
+  }
+
+  .selected .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .rejected .dot { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 20px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 12px rgba(79,142,247,0.5);
+  }
+
+  /* Skills */
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .icon {
+    font-size: 14px;
+  }
+
+  .skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .skill-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    animation: popIn 0.3s ease both;
+  }
+
+  .skill-tag:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .skill-tag .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  /* Job roles */
+  .jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .job-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: all 0.25s ease;
+    cursor: default;
+    animation: popIn 0.3s ease both;
+  }
+
+  .job-card:hover {
+    border-color: var(--accent2);
+    background: rgba(167,139,250,0.07);
+    transform: translateY(-2px);
+  }
+
+  .job-emoji { font-size: 1.4rem; margin-bottom: 8px; display: block; }
+
+  .job-title {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .job-match {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 1px;
+  }
+
+  /* No match */
+  .no-skills {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    padding: 12px 0;
+  }
+
+  /* Animations */
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+  @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.85); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 48px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 500px) {
+    .score-card { flex-direction: column; align-items: flex-start; }
+    .score-value { font-size: 2.5rem; }
+  }
 </style>
 </head>
-
 <body>
+<div class="orb2"></div>
 
-<div class="container">
-    <h2>Resume Analyzer</h2>
+<div class="wrapper">
 
-    <input type="file" id="resume">
-    <button onclick="upload()">Analyze Resume</button>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-tag">AI-Powered</div>
+    <h1>ResumeIQ</h1>
+    <p class="subtitle">// smart resume analysis + job matching</p>
+  </div>
 
-    <div class="loader" id="loader">Analyzing...</div>
+  <!-- Upload Card -->
+  <div class="card">
+    <div class="card-label">Upload Resume</div>
 
-    <div class="result" id="result">
-        <p><b>Skills:</b></p>
-        <div id="skills"></div>
-
-        <p><b>Score:</b> <span id="score"></span></p>
-        <p><b>Status:</b> <span id="status"></span></p>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="resume" accept=".pdf" onchange="onFileChosen(this)">
+      <div class="drop-icon">📄</div>
+      <p>Drop your PDF here or <strong>click to browse</strong></p>
+      <p style="margin-top:6px;font-size:11px;">Supported: PDF files only</p>
+      <div class="file-chosen" id="fileChosen">✓ <span id="fileName"></span></div>
     </div>
+
+    <button class="btn" id="analyzeBtn" onclick="upload()">Analyze Resume →</button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader-ring"></div>
+    <p>Scanning your resume...</p>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <!-- Score + Status -->
+    <div class="score-card">
+      <div class="score-info">
+        <h3>Skill Match Score</h3>
+        <div class="score-value" id="score">0%</div>
+      </div>
+      <div class="status-badge" id="statusBadge">
+        <span class="dot"></span>
+        <span id="statusText">—</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Coverage</span>
+        <span id="progressLabel">0 / 11 skills detected</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Detected Skills -->
+    <div class="section-card">
+      <div class="section-title"><span class="icon">⚡</span> Detected Skills</div>
+      <div class="skills-grid" id="skills"></div>
+    </div>
+
+    <!-- Suggested Job Roles -->
+    <div class="section-card">
+      <div class="section-title"><span class="icon">🎯</span> Suggested Job Roles</div>
+      <div class="jobs-grid" id="jobRoles"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">ResumeIQ · Powered by skill detection</div>
 </div>
 
 <script>
+// ─── Job Role Definitions ────────────────────────────────────────────────────
+const JOB_ROLES = [
+  {
+    title: "Frontend Developer",
+    emoji: "🖥️",
+    required: ["html", "css", "javascript"],
+    keywords: ["html", "css", "javascript"]
+  },
+  {
+    title: "Backend Developer",
+    emoji: "⚙️",
+    required: ["python", "sql"],
+    keywords: ["python", "java", "sql", "flask", "django", "mongodb"]
+  },
+  {
+    title: "Full Stack Developer",
+    emoji: "🔗",
+    required: ["html", "javascript"],
+    keywords: ["html", "css", "javascript", "python", "sql", "flask", "django", "mongodb"]
+  },
+  {
+    title: "Data Analyst",
+    emoji: "📊",
+    required: ["python", "sql"],
+    keywords: ["python", "sql", "mongodb"]
+  },
+  {
+    title: "Django Developer",
+    emoji: "🌐",
+    required: ["django", "python"],
+    keywords: ["django", "python", "sql", "html", "css"]
+  },
+  {
+    title: "Flask Developer",
+    emoji: "🧪",
+    required: ["flask", "python"],
+    keywords: ["flask", "python", "sql", "html"]
+  },
+  {
+    title: "Java Developer",
+    emoji: "☕",
+    required: ["java"],
+    keywords: ["java", "sql", "html"]
+  },
+  {
+    title: "Database Administrator",
+    emoji: "🗄️",
+    required: ["sql"],
+    keywords: ["sql", "mongodb", "python"]
+  },
+  {
+    title: "Systems Programmer",
+    emoji: "🔧",
+    required: ["c"],
+    keywords: ["c", "c++", "python"]
+  },
+  {
+    title: "Web Developer",
+    emoji: "🌍",
+    required: ["html", "css"],
+    keywords: ["html", "css", "javascript", "sql"]
+  }
+];
+
+function getSuggestedRoles(skills) {
+  const matched = [];
+  for (const role of JOB_ROLES) {
+    const hasRequired = role.required.every(r => skills.includes(r));
+    if (!hasRequired) continue;
+    const matchCount = role.keywords.filter(k => skills.includes(k)).length;
+    const pct = Math.round((matchCount / role.keywords.length) * 100);
+    matched.push({ ...role, matchPct: pct });
+  }
+  matched.sort((a, b) => b.matchPct - a.matchPct);
+  return matched.slice(0, 6);
+}
+
+// ─── UI Helpers ──────────────────────────────────────────────────────────────
+function onFileChosen(input) {
+  const fileChosen = document.getElementById('fileChosen');
+  const fileName = document.getElementById('fileName');
+  if (input.files.length > 0) {
+    fileName.textContent = input.files[0].name;
+    fileChosen.style.display = 'flex';
+  }
+}
+
+// Drag & drop styling
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); });
+
+// ─── Core Upload & Analyze (CORE LOGIC UNCHANGED) ────────────────────────────
 async function upload() {
-    let fileInput = document.getElementById("resume");
-    let loader = document.getElementById("loader");
-    let result = document.getElementById("result");
+  let fileInput = document.getElementById("resume");
+  let loader = document.getElementById("loader");
+  let results = document.getElementById("results");
+  let btn = document.getElementById("analyzeBtn");
 
-    if (fileInput.files.length === 0) {
-        alert("Upload a file first!");
-        return;
+  if (fileInput.files.length === 0) {
+    alert("Upload a file first!");
+    return;
+  }
+
+  let formData = new FormData();
+  formData.append("resume", fileInput.files[0]);
+
+  loader.style.display = "block";
+  results.style.display = "none";
+  btn.disabled = true;
+
+  try {
+    let response = await fetch("/analyze", {
+      method: "POST",
+      body: formData
+    });
+
+    let data = await response.json();
+
+    loader.style.display = "none";
+    btn.disabled = false;
+
+    // ── Render Score ──────────────────────────────────────────────────
+    document.getElementById("score").textContent = data.score + "%";
+
+    // ── Render Status Badge ───────────────────────────────────────────
+    const badge = document.getElementById("statusBadge");
+    const statusText = document.getElementById("statusText");
+    badge.className = "status-badge " + (data.status === "Selected" ? "selected" : "rejected");
+    statusText.textContent = data.status === "Selected" ? "✦ Selected" : "✕ Rejected";
+
+    // ── Render Progress Bar ───────────────────────────────────────────
+    document.getElementById("progressLabel").textContent =
+      data.skills.length + " / 11 skills detected";
+    setTimeout(() => {
+      document.getElementById("progressFill").style.width = data.score + "%";
+    }, 100);
+
+    // ── Render Skills ─────────────────────────────────────────────────
+    let skillsDiv = document.getElementById("skills");
+    skillsDiv.innerHTML = "";
+    if (data.skills.length === 0) {
+      skillsDiv.innerHTML = '<p class="no-skills">No known skills detected in the document.</p>';
+    } else {
+      data.skills.forEach((skill, i) => {
+        let span = document.createElement("span");
+        span.className = "skill-tag";
+        span.style.animationDelay = (i * 0.05) + "s";
+        span.innerHTML = '<span class="dot"></span>' + skill;
+        skillsDiv.appendChild(span);
+      });
     }
 
-    let formData = new FormData();
-    formData.append("resume", fileInput.files[0]);
-
-    loader.style.display = "block";
-    result.style.display = "none";
-
-    try {
-        let response = await fetch("/analyze", {
-            method: "POST",
-            body: formData
-        });
-
-        let data = await response.json();
-
-        loader.style.display = "none";
-        result.style.display = "block";
-
-        let skillsDiv = document.getElementById("skills");
-        skillsDiv.innerHTML = "";
-
-        data.skills.forEach(skill => {
-            let span = document.createElement("span");
-            span.className = "badge";
-            span.innerText = skill;
-            skillsDiv.appendChild(span);
-        });
-
-        document.getElementById("score").innerText = data.score + "%";
-
-        let status = document.getElementById("status");
-        status.innerText = data.status;
-
-        if (data.status === "Selected") {
-            status.className = "selected";
-        } else {
-            status.className = "rejected";
-        }
-
-    } catch (error) {
-        loader.style.display = "none";
-        alert("Error connecting to server!");
+    // ── Render Job Roles ──────────────────────────────────────────────
+    const rolesDiv = document.getElementById("jobRoles");
+    rolesDiv.innerHTML = "";
+    const roles = getSuggestedRoles(data.skills);
+    if (roles.length === 0) {
+      rolesDiv.innerHTML = '<p class="no-skills">Add more skills to your resume to unlock job suggestions.</p>';
+    } else {
+      roles.forEach((role, i) => {
+        const card = document.createElement("div");
+        card.className = "job-card";
+        card.style.animationDelay = (i * 0.07) + "s";
+        card.innerHTML = `
+          <span class="job-emoji">${role.emoji}</span>
+          <div class="job-title">${role.title}</div>
+          <div class="job-match">${role.matchPct}% match</div>
+        `;
+        rolesDiv.appendChild(card);
+      });
     }
+
+    // Show results
+    results.style.display = "block";
+
+  } catch (error) {
+    loader.style.display = "none";
+    btn.disabled = false;
+    alert("Error connecting to server!");
+  }
 }
 </script>
-
 </body>
 </html>
