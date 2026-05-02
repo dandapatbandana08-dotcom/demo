@@ -42,7 +42,7 @@ def analyze():
     found_skills = [skill for skill in skills_list if skill in text]
 
     score = int((len(found_skills) / len(skills_list)) * 100)
-    status = "Selected" if score >= 50 else "Rejected"
+    status = "Shortlisted" if score >= 50 else "Rejected"
 
     return jsonify({
         "skills": found_skills,
